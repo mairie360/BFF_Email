@@ -20,7 +20,7 @@
     "openapi-fetch": "0.17.0",
     "swagger-jsdoc": "6.3.0",
     "swagger-ui-express": "5.0.1",
-    "swagger-ui-react": "5.32.14",
+    "swagger-ui-react": "5.32.15",
     "zod": "4.5.4"
   },
   "devDependencies": {
