@@ -1,5 +1,5 @@
 {
-  "name": "bff-template",
+  "name": "bff-email",
   "version": "1.0.0",
   "scripts": {
     "start": "ts-node src/index.ts",
@@ -7,20 +7,16 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "openapi:extract": "ts-node scripts/export-swagger.ts",
-    "test": "jest"
+    "test": "jest",
+    "contracts:generate": "npm run openapi:extract && node scripts/contracts.mjs --generate",
+    "contracts:check": "npm run openapi:extract -- --check && node scripts/contracts.mjs --check"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "8.5.0",
-    "@mairie360/core-api-openapi": "0.4.0",
-    "@mairie360/email-api-openapi": "0.3.0",
     "axios": "1.20.0",
     "dotenv": "17.4.2",
     "express": "5.2.1",
-    "next-swagger-doc": "0.5.0",
-    "openapi-fetch": "0.17.0",
-    "swagger-jsdoc": "6.3.0",
     "swagger-ui-express": "5.0.1",
-    "swagger-ui-react": "5.32.15",
     "zod": "4.5.4"
   },
   "devDependencies": {
@@ -38,6 +34,7 @@
     "ts-jest": "29.4.12",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.69.0"
+    "typescript-eslint": "8.69.0",
+    "@types/node": "^22.0.0"
   }
 }

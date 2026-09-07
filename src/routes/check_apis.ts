@@ -1,56 +1,16 @@
 import { Router } from 'express';
-import axios from 'axios';
-import { CheckApiResponse, CheckApiResponseSchema } from '../views/check_api_view';
 import { registry } from '../openapi-registry';
+import { baseUrl } from '../clients/upstream';
 
 const router = Router();
-
-const CORE_FULL_URL = `http://${process.env.CORE_API_URL}:${process.env.CORE_API_PORT}`;
-const EMAIL_FULL_URL = `http://${process.env.EMAIL_API_URL}:${process.env.EMAIL_API_PORT}`;
-
-registry.registerPath({
-  method: 'get',
-  path: '/check_apis',
-  tags: ['Connectivity'],
-  summary: "Vérifie la connexion avec l'API Core et Email (Rust)",
-  responses: {
-    200: {
-      description: 'Connexion réussie',
-      content: {
-        'application/json': {
-          schema: CheckApiResponseSchema,
-        },
-      },
-    },
-    502: {
-      description: 'API Core injoignable',
-    },
-  },
+registry.registerPath({ method: 'get', path: '/check_apis', responses: { 200: { description: 'Services disponibles' }, 502: { description: 'Service indisponible' } } });
+router.get('/', async (_req, res) => {
+  const services = ["CORE_API", "EMAIL_API"];
+  const results = await Promise.allSettled(services.map(async (service) => {
+    const response = await fetch(`${baseUrl(service)}/health`, { signal: AbortSignal.timeout(5_000) });
+    if (!response.ok) throw new Error('Unavailable');
+  }));
+  const ok = results.every((result) => result.status === 'fulfilled');
+  res.status(ok ? 200 : 502).json({ status: ok ? 'OK' : 'Error', ...Object.fromEntries(services.map((service, index) => [service.toLowerCase(), results[index].status === 'fulfilled' ? 'Connected' : 'Unreachable'])) });
 });
-
-router.get('/', async (_, res) => {
-  try {
-    const coreResponse = await axios.get(`${CORE_FULL_URL}/health`, { timeout: 5000 });
-    console.log(coreResponse);
-    const core_is_reachable = coreResponse.status === 200;
-    
-    const emailResponse = await axios.get(`${EMAIL_FULL_URL}/health`, { timeout: 5000 });
-    console.log(emailResponse);
-    const email_is_reachable = emailResponse.status === 200;
-    const result: CheckApiResponse = {
-      status: 'OK',
-      core_api: core_is_reachable ? 'Connected' : 'Unreachable',
-      email_api: email_is_reachable ? 'Connected' : 'Unreachable'
-    };
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(502).json({
-      status: 'Error',
-      core_api: 'Unreachable',
-      email_api: 'Unreachable',
-      message: (error as Error).message
-    });
-  }
-});
-
 export default router;
