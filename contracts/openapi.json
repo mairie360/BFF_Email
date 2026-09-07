@@ -1,0 +1,564 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BFF Email API",
+    "version": "1.0.0"
+  },
+  "components": {
+    "schemas": {
+      "EmailAttachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sizeLabel": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sizeBytes",
+          "sizeLabel"
+        ]
+      },
+      "EmailMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "senderName": {
+            "type": "string"
+          },
+          "senderEmail": {
+            "type": "string"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "preview": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "folder": {
+            "type": "string",
+            "enum": [
+              "inbox",
+              "sent",
+              "drafts",
+              "archived",
+              "trash"
+            ]
+          },
+          "unread": {
+            "type": "boolean"
+          },
+          "isFavorite": {
+            "type": "boolean"
+          },
+          "isImportant": {
+            "type": "boolean"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmailAttachment"
+            }
+          },
+          "originalFolder": {
+            "type": "string",
+            "enum": [
+              "inbox",
+              "sent",
+              "drafts",
+              "archived",
+              "trash"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "senderName",
+          "senderEmail",
+          "recipients",
+          "subject",
+          "preview",
+          "body",
+          "timestamp",
+          "folder"
+        ]
+      },
+      "EmailCompose": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "attachmentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "new",
+              "reply",
+              "reply-all",
+              "forward",
+              "draft"
+            ]
+          },
+          "sourceMessageId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "to",
+          "subject",
+          "body"
+        ]
+      },
+      "EmailBootstrap": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmailMessage"
+            }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "inbox",
+                    "favorites",
+                    "important",
+                    "sent",
+                    "drafts",
+                    "archived",
+                    "trash"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "label"
+              ]
+            }
+          },
+          "currentUserEmail": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "messages",
+          "folders",
+          "currentUserEmail"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Connectivity"
+        ],
+        "summary": "Vérifie la santé du BFF",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/check_apis": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Services disponibles"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    },
+    "/emails/bootstrap": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Boîte de messagerie de l’utilisateur connecté",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailBootstrap"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Données indisponibles ou incompatibles"
+          }
+        }
+      }
+    },
+    "/emails/messages": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailCompose"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    },
+    "/emails/messages/{messageId}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "messageId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "messageId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    },
+    "/emails/drafts": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailCompose"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    },
+    "/emails/drafts/{messageId}": {
+      "patch": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "messageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailCompose"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    },
+    "/emails/attachments": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "category": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    },
+    "/emails/attachments/{attachmentId}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "attachmentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    },
+    "/emails/messages/{messageId}/state": {
+      "patch": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "messageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Réponse de l’API propriétaire"
+          },
+          "201": {
+            "description": "Création confirmée"
+          },
+          "204": {
+            "description": "Opération confirmée"
+          },
+          "401": {
+            "description": "Session invalide"
+          },
+          "502": {
+            "description": "Service indisponible"
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}
